@@ -11,6 +11,7 @@ angular.module("umbraco").controller("Simple301Controller", function ($rootScope
     $scope.errorMessage = '';
     //App state
     $scope.initialLoad = false;
+    $scope.cacheCleared = false;
 
     /*
     * Event listener to refresh redirects table after bulk upload
@@ -28,6 +29,15 @@ angular.module("umbraco").controller("Simple301Controller", function ($rootScope
 
         $scope.tableParams.total($scope.redirects.length);
         $scope.tableParams.reload();
+    }
+
+    /*
+    * Handles clearing the cache by
+    * calling to get all redirects again
+    */
+    $scope.clearCache = function () {
+        $scope.cacheCleared = true;
+        return Simple301Api.clearCache().then($scope.fetchRedirects.bind(this));
     }
 
     /*
@@ -218,7 +228,14 @@ angular.module("umbraco").controller("Simple301Controller", function ($rootScope
         //If we have a tab, set the click handler so we only
         //load the content on tab click. 
         if ($scope.$tab && $scope.$tab.length > 0) {
+            var $parent = $scope.$tab.parent();
+
+            // bind click event
             $scope.$tab.on('click', $scope.initLoad.bind(this));
+
+            // if it is selected already or there is only one tab, init load
+            if ($parent.hasClass('active') || $parent.children().length == 1)
+                $scope.initLoad();
         }
         else {
             $scope.initLoad();
@@ -241,7 +258,7 @@ angular.module("umbraco.resources").factory("Simple301Api", function ($http) {
         },
         //Send data to add a new redirect
         add: function (isRegex, oldUrl, newUrl, notes) {
-            return $http.post("backoffice/Simple301/RedirectApi/Add", JSON.stringify({ isRegex, oldUrl: oldUrl, newUrl: newUrl, notes: notes }));
+            return $http.post("backoffice/Simple301/RedirectApi/Add", JSON.stringify({ isRegex: isRegex, oldUrl: oldUrl, newUrl: newUrl, notes: notes }));
         },
         //Send request to update an existing redirect
         update: function (redirect) {
@@ -250,6 +267,11 @@ angular.module("umbraco.resources").factory("Simple301Api", function ($http) {
         //Remove / Delete an existing redirect
         remove: function (id) {
             return $http.delete("backoffice/Simple301/RedirectApi/Delete/" + id);
+        },
+
+        //Clear cache
+        clearCache: function () {
+            return $http.post("backoffice/Simple301/RedirectApi/ClearCache");
         }
     };
 });
