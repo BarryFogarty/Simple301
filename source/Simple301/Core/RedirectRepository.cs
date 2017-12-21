@@ -97,6 +97,43 @@ namespace Simple301.Core
             //return new redirect
             return newRedirect;
         }
+   
+        public static AddRedirectResponse AddRedirectFromCsv(string oldUrl, string newUrl, string notes)
+        {
+            if (!oldUrl.IsSet()) return new AddRedirectResponse { Success = false, Message = "Old URL must not be blank" };
+            if (!newUrl.IsSet()) return new AddRedirectResponse { Success = false, Message = "New URL must not be blank" };
+
+            //Ensure starting slash if not regex
+            oldUrl = oldUrl.EnsurePrefix("/").ToLower();
+
+            // Allow external redirects and ensure slash if not absolute
+            newUrl = Uri.IsWellFormedUriString(newUrl, UriKind.Absolute) ?
+                newUrl :
+                newUrl.EnsurePrefix("/").ToLower();
+
+            // First look for single match
+            var redirect = FetchRedirectByOldUrl(oldUrl);
+            if (redirect != null) throw new ArgumentException("A redirect for " + oldUrl + " already exists");
+
+            // Second pull all for loop detection
+            var redirects = FetchRedirects();
+            if (DetectLoop(oldUrl, newUrl, redirects)) throw new ApplicationException("Adding this redirect would cause a redirect loop");
+
+            //Add redirect to DB
+            var db = ApplicationContext.Current.DatabaseContext.Database;
+            var newRedirect = new Redirect()
+            {
+                OldUrl = oldUrl,
+                NewUrl = newUrl,
+                LastUpdated = DateTime.Now.ToUniversalTime(),
+                Notes = notes
+            };
+            var idObj = db.Insert(newRedirect);
+            newRedirect.Id = Convert.ToInt32(idObj);
+
+            return new AddRedirectResponse { NewRedirect = newRedirect, Success = true };
+        }
+
 
         /// <summary>
         /// Update a given redirect
