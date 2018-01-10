@@ -98,10 +98,10 @@ namespace Simple301.Core
             return newRedirect;
         }
    
-        public static AddRedirectResponse AddRedirectFromCsv(string oldUrl, string newUrl, string notes)
+        public static Redirect AddRedirectFromCsv(string oldUrl, string newUrl, string notes)
         {
-            if (!oldUrl.IsSet()) return new AddRedirectResponse { Success = false, Message = "Old URL must not be blank" };
-            if (!newUrl.IsSet()) return new AddRedirectResponse { Success = false, Message = "New URL must not be blank" };
+            if (!oldUrl.IsSet()) throw new ArgumentException("Old URL must not be blank");
+            if (!newUrl.IsSet()) throw new ArgumentException("New URL must not be blank");
 
             //Ensure starting slash if not regex
             oldUrl = oldUrl.EnsurePrefix("/").ToLower();
@@ -131,7 +131,7 @@ namespace Simple301.Core
             var idObj = db.Insert(newRedirect);
             newRedirect.Id = Convert.ToInt32(idObj);
 
-            return new AddRedirectResponse { NewRedirect = newRedirect, Success = true };
+            return newRedirect;
         }
 
 
@@ -319,7 +319,7 @@ namespace Simple301.Core
         private static Dictionary<string, Redirect> FetchRedirectsFromDb()
         {
             var db = ApplicationContext.Current.DatabaseContext.Database;
-            var redirects = db.Query<Redirect>("SELECT * FROM Redirects");
+            var redirects = db.Query<Redirect>("SELECT OldUrl, NewUrl, ISNULL(Notes, '') As Notes FROM Redirects");
             return redirects != null ? redirects.ToDictionary(x => x.OldUrl) : new Dictionary<string, Redirect>();
         }
 

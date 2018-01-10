@@ -1,5 +1,4 @@
-﻿using Simple301.Core.FileUpload;
-using Simple301.Core.Models;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -8,6 +7,8 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Http;
+using Simple301.Core.FileUpload;
+using Simple301.Core.Models;
 using Umbraco.Web.Mvc;
 using Umbraco.Web.WebApi;
 
@@ -98,7 +99,17 @@ namespace Simple301.Core
                 return new AddRedirectResponse { Success = false, Message = "Skipped header row from CSV file" };
             }
 
-            return RedirectRepository.AddRedirectFromCsv(oldUrl, newUrl, notes);
+            try
+            {
+                var redirect = RedirectRepository.AddRedirectFromCsv(oldUrl, newUrl, notes);
+                return new AddRedirectResponse() { Success = true, NewRedirect = redirect };
+            }
+            catch (Exception e)
+            {
+                return new AddRedirectResponse() { Success = false, Message = e.Message };
+            }
+
+           
         }
 
     }
