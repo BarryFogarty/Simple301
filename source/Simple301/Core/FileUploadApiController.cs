@@ -89,9 +89,9 @@ namespace Simple301.Core
         {
             var cells = row.Split(',');
 
-            var oldUrl = cells[0];
-            var newUrl = cells[1];
-            var notes = cells.Length > 2 ? cells[2] : null;
+            var oldUrl = cells[0]?.Trim();
+            var newUrl = cells[1]?.Trim();
+            var notes = cells.Length > 2 ? cells[2].Trim() : null;
 
             if (oldUrl.ToLower().Replace(" ", "") == "oldurl" || newUrl.ToLower().Replace(" ", "") == "newurl")
             {
